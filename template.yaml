@@ -1,0 +1,148 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  task_2
+
+  Sample SAM Template for task_2
+  
+Globals:
+  Function:
+    Timeout: 3
+    Tracing: Active
+  Api:
+    TracingEnabled: true
+Parameters:
+  StudentTableName:
+    Description: StudentTable
+    Type: String
+    Default: student_details
+  TeacherTableName:
+    Description: TeacherTable
+    Type: String
+    Default: teacher_details
+  BucketName:
+    Description: Profiles
+    Type: String
+    Default: Profiles
+
+Resources:
+  GetDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: getdatafunction
+      CodeUri: getData/
+      Policies:
+      - AmazonDynamoDBFullAccess
+      - AmazonS3FullAccess
+      Handler: index1.handler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          StudentTableName: !Ref StudentTableName
+          TeacherTableName: !Ref TeacherTableName
+            
+      Events:
+        Student:
+          Type: Api
+          Properties:
+            Path: /student
+            Method: get
+        Teacher:
+          Type: Api
+          Properties:
+            Path: /teachers
+            Method: get
+    
+  PutDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: putdatafunction
+      CodeUri: putData/
+      Policies:
+      - AmazonDynamoDBFullAccess
+      - AmazonS3FullAccess
+      Handler: index2.handler
+      Runtime: nodejs16.x
+      Architectures:
+      - x86_64
+      Environment:
+        Variables:
+          StudentTableName: !Ref StudentTableName
+          TeacherTableName: !Ref TeacherTableName
+
+      Events:
+        Student:
+          Type: Api
+          Properties:
+            Path: /student
+            Method: post
+        Teacher:
+          Type: Api
+          Properties:
+            Path: /teachers
+            Method: post
+   
+  StudentDetailsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref StudentTableName
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+      - AttributeName: StudentId
+        AttributeType: S
+      - AttributeName: Department
+        AttributeType: S
+      KeySchema:
+      - AttributeName: StudentId
+        KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: GSIStudents
+        KeySchema:
+        - AttributeName: Department
+          KeyType: HASH
+        Projection:
+          ProjectionType: KEYS_ONLY
+        ProvisionedThroughput:
+          ReadCapacityUnits: 3
+          WriteCapacityUnits: 3
+    
+
+  TeacherDetailsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TeacherTableName
+      BillingMode: PROVISIONED
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      AttributeDefinitions:
+      - AttributeName: TeacherId
+        AttributeType: S
+      - AttributeName: Department
+        AttributeType: S
+      KeySchema:
+      - AttributeName: TeacherId
+        KeyType: HASH
+      GlobalSecondaryIndexes:
+      - IndexName: GSITeachers
+        KeySchema:
+        - AttributeName: Department
+          KeyType: HASH
+        Projection:
+          ProjectionType: KEYS_ONLY
+        ProvisionedThroughput:
+          ReadCapacityUnits: 3
+          WriteCapacityUnits: 3
+    
+Outputs:
+  StudentApi:
+    Description: API Gateway endpoint URL for Prod stage for Get Data function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/student"
+  TeacherApi:
+    Description: API Gateway endpoint URL for Prod stage for Get Data function
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/teachers"

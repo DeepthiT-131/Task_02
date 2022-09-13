@@ -1,0 +1,13 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "sam1"
+s3_bucket = "bucketforuserstorage"
+s3_prefix = "sam1"
+region = "us-east-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
+disable_rollback = true
+parameter_overrides = "StudentTableName=\"student_details\" TeacherTableName=\"teacher_details\" BucketName=\"Profiles\""
+image_repositories = []
